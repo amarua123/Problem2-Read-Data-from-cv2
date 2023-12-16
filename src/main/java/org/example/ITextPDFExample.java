@@ -19,13 +19,8 @@ import org.krysalis.jcharts.properties.*;
 import org.krysalis.jcharts.test.TestDataGenerator;
 import org.krysalis.jcharts.types.ChartType;
 
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import javax.swing.*;
 
 public class ITextPDFExample {
     private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 18,
@@ -43,7 +38,7 @@ public class ITextPDFExample {
         String[] xAxisLabels = {"Q1", "Q2", "Q3", "Q4"};
         String xAxisTitle = "Quarter"; /* X - Axis label */
         String yAxisTitle = "Sales Count"; /*Y-Axis label */
-        String title = "CountryVsSales - Bar Chart"; /* Chart title */
+        String title = "Month With Interview Count - Bar Chart"; /* Chart title */
         DataSeries dataSeries = new DataSeries(xAxisLabels, xAxisTitle, yAxisTitle, title);
 
 
@@ -87,11 +82,11 @@ public class ITextPDFExample {
 
             addMetaData(document);
 
-            document.add(newimage);
-
             addTitlePage(document);
 
-            addContent(document);
+            document.add(newimage);
+
+//            addContent(document);
             document.close();
         } catch (DocumentException e) {
             throw new RuntimeException(e);
@@ -99,11 +94,11 @@ public class ITextPDFExample {
     }
 
     private static void addMetaData(Document document) {
-        document.addTitle("My first PDF");
-        document.addSubject("Using iText");
-        document.addKeywords("Java, PDF, iText");
-        document.addAuthor("Lars Vogel");
-        document.addCreator("Lars Vogel");
+//        document.addTitle("My first PDF");
+//        document.addSubject("Using iText");
+        document.addKeywords("Java, PDF, iText, jCharts");
+        document.addAuthor(System.getProperty("user.name"));
+        document.addCreator(System.getProperty("user.name"));
     }
 
     private static void addTitlePage(Document document)
@@ -133,7 +128,7 @@ public class ITextPDFExample {
         document.add(preface);
 
         // Start a new page
-        document.newPage();
+//        document.newPage();
     }
 
     private static void addContent(Document document) throws DocumentException {
@@ -160,10 +155,10 @@ public class ITextPDFExample {
         subCatPart.add(paragraph);
 
         // add a table
-        createTable(subCatPart);
+//        createTable(subCatPart);
 
         // now add all this to the document
-        document.add(catPart);
+//        document.add(catPart);
 
         // Next section
         anchor = new Anchor("Second Chapter", catFont);
@@ -185,10 +180,10 @@ public class ITextPDFExample {
             throws BadElementException {
         PdfPTable table = new PdfPTable(3);
 
-        // t.setBorderColor(BaseColor.GRAY);
-        // t.setPadding(4);
-        // t.setSpacing(4);
-        // t.setBorderWidth(1);
+//         t.setBorderColor(BaseColor.GRAY);
+//         t.setPadding(4);
+//         t.setSpacing(4);
+//         t.setBorderWidth(1);
 
         PdfPCell c1 = new PdfPCell(new Phrase("Table Header 1"));
         c1.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -215,11 +210,11 @@ public class ITextPDFExample {
     }
 
     private static void createList(Section subCatPart) {
-        List list = new List(true, false, 10);
-        list.add(new ListItem("First point"));
-        list.add(new ListItem("Second point"));
-        list.add(new ListItem("Third point"));
-        subCatPart.add(list);
+//        List list = new List(true, false, 10);
+//        list.add(new ListItem("First point"));
+//        list.add(new ListItem("Second point"));
+//        list.add(new ListItem("Third point"));
+//        subCatPart.add(list);
     }
 
     private static void addEmptyLine(Paragraph paragraph, int number) {

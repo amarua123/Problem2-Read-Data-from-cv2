@@ -15,7 +15,7 @@ public class DBCPDataSource {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        ds.setUrl("jdbc:mysql://localhost:3306/student");
+        ds.setUrl("jdbc:mysql://localhost:3306/interview");
         ds.setUsername("root");
         ds.setPassword("123456");
         ds.setMinIdle(5);

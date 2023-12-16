@@ -25,10 +25,7 @@ public class CreateConnection{
 
                 // Condition check
                 while (rs.next()) {
-
-//                    int id = rs.getInt("id");
                     String name = rs.getString("studentname");
-//                    String email = rs.getString("email");
                     System.out.println(name);
                 }
             }
