@@ -34,8 +34,6 @@ public class Main {
             {
 
                 Row row = rowIterator.next();
-                //For each row, iterate through all the columns
-//                Iterator<Cell> cellIterator = row.cellIterator();
 
                 if(row.getCell(0).getCellType() == STRING){
                     continue;
@@ -58,27 +56,7 @@ public class Main {
                 }catch (NullPointerException newe){
                     continue;
                 }
-
                 System.out.println();
-//                while (cellIterator.hasNext())
-//                {
-//                    Cell cell = cellIterator.next();
-//
-//                    //Check the cell type and format accordingly
-//                    switch (cell.getCellType())
-//                    {
-//                        case NUMERIC:
-//                            System.out.print(df1.format(cell.getDateCellValue())+" ");
-//                            break;
-//                        case STRING:
-//                            if(cell.getStringCellValue().compareTo("") != 0){
-//                                System.out.print(cell.getStringCellValue()+" ");
-//                            }
-//                            break;
-//
-//                    }
-//                }
-//                System.out.println("Reading File Completed.");
             }
             file.close();
         }
