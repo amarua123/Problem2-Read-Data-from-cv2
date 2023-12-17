@@ -5,7 +5,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -16,15 +18,16 @@ import static org.apache.poi.ss.usermodel.CellType.NUMERIC;
 import static org.apache.poi.ss.usermodel.CellType.STRING;
 
 public class Main {
-    public static void main(String[] args) {
-        try
-        {
-            FileInputStream file = new FileInputStream("C:\\Users\\amar.sarkar\\Downloads\\Problem2-Read-Data-from-cv2\\src\\main\\resources\\Data.xlsx");
+    public static void main(String[] args) throws FileNotFoundException {
+
+    }
+
+    public static void insert_into_database(){
+        try{
+            FileInputStream file = new FileInputStream("./src/main/resources/Data.xlsx");
 
             //Create Workbook instance holding reference to .xlsx file
             XSSFWorkbook wb = new XSSFWorkbook(file);
-
-            //Get first/desired sheet from the workbook
             XSSFSheet ws = wb.getSheetAt(0);
             DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd");
             DateFormat df2 = new SimpleDateFormat("hh:mm:ss");
@@ -32,26 +35,21 @@ public class Main {
             Iterator<Row> rowIterator = ws.iterator();
             rowIterator.next(); //skipping 1st row which has headings
 
-
-
             Connection con = DBCPDataSource.getConnection();
             con.setAutoCommit(false);
             PreparedStatement p = null;
-            String sql = "insert into interviews (interviewdate, team, panelname, interviewround, skill, interviewtime, candidate_cur_loc, candidate_pref_loc, candidate_name)\n"
-                + "values(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql =
+                    "insert into interviews (interviewdate, team, panelname, interviewround, skill, interviewtime, candidate_cur_loc, candidate_pref_loc, candidate_name)\n"
+                    + "values(?, ?, ?, ?, ?, ?, ?, ?, ?)";
             p = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
             ResultSet rs = null;
 
-            while (rowIterator.hasNext())
-            {
+            while (rowIterator.hasNext()){
 
                 Row row = rowIterator.next();
 
-                if(row.getCell(0).getCellType() == STRING){
-                    continue;
-                }
-                if(row.getCell(6).getCellType() == STRING){
+                if(row.getCell(0).getCellType() == STRING || row.getCell(6).getCellType() == STRING){
                     continue;
                 }
                 try{
@@ -68,8 +66,6 @@ public class Main {
 //                    System.out.print(candidate_cur_loc+" "+candidate_pref_loc+" "+candidate_name);
 
                     //------------------------------------Inserting Data into Database---------------------------------------------//
-
-
                     p.setString(1, cellDate);
                     p.setString(2, team);
                     p.setString(3, panel);
@@ -79,7 +75,6 @@ public class Main {
                     p.setString(7, candidate_cur_loc);
                     p.setString(8, candidate_pref_loc);
                     p.setString(9, candidate_name);
-
                     //---------------------------------------------------------------------------------//
 
                 }catch (NullPointerException newe){
@@ -89,13 +84,12 @@ public class Main {
 //                System.out.println();
             }
             int[] updateCounts = p.executeBatch();
-            System.out.println(Arrays.toString(updateCounts));
             con.commit();
             con.setAutoCommit(true);
+            System.out.println(updateCounts.length + " rows inserted");
 
             file.close();
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
     }

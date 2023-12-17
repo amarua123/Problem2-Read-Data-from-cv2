@@ -21,6 +21,11 @@ import org.krysalis.jcharts.types.ChartType;
 
 import java.awt.*;
 import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Arrays;
 
 public class ITextPDFExample {
     private static Font catFont = new Font(Font.FontFamily.TIMES_ROMAN, 18,
@@ -32,24 +37,75 @@ public class ITextPDFExample {
     private static Font smallBold = new Font(Font.FontFamily.TIMES_ROMAN, 12,
             Font.BOLD);
 
-    public static void main(String args[]) throws IOException {
+    public static void main(String args[]) {
+
+        Document document = new Document();
+        //Question 1
+        try{
+            PdfWriter.getInstance(document, new FileOutputStream("./src/main/resources/Data.pdf"));
+            document.open();
+            addMetaData(document);
+            addTitlePage(document, "Interview Report");
+
+            Connection con = DBCPDataSource.getConnection();
+            PreparedStatement p = null;
+            ResultSet rs = null;
+            addHeading(document, "Team with Maximum Interviews");
+            String sql = "select team, count(*) as total_interviews from interviews\n" +
+                    "where interviewdate between '2023-10-01' and '2023-11-30'\n" +
+                    "group by team order by count(*) desc limit 1;";
+            p = con.prepareStatement(sql);
+            rs = p.executeQuery();
+            System.out.println();
+
+            // Condition check
+            while (rs.next()) {
+                String team = rs.getString("team");
+                String total_interviews = rs.getString("total_interviews");
+//                System.out.println(team+" "+total_interviews);
+                createTable(document, new String[]{"Team", "Total Interviews"}, new String[][]{new String[]{team, total_interviews}});
+            }
+
+            document.add(new Paragraph("\n"));
+        //Question 2
+            addHeading(document, "Team with Minimum Interviews");
+            sql = "select team, count(*) as total_interviews from interviews\n" +
+                    "where interviewdate between '2023-10-01' and '2023-11-30'\n" +
+                    "group by team order by count(*) limit 1;";
+            p = con.prepareStatement(sql);
+            rs = p.executeQuery();
+            System.out.println();
+            // Condition check
+            while (rs.next()) {
+                String team = rs.getString("team");
+                String total_interviews = rs.getString("total_interviews");
+//                System.out.println(team+" "+total_interviews);
+                createTable(document, new String[]{"Team", "Total Interviews"}, new String[][]{new String[]{team, total_interviews}});
+            }
 
 
-        String[] xAxisLabels = {"Q1", "Q2", "Q3", "Q4"};
-        String xAxisTitle = "Quarter"; /* X - Axis label */
-        String yAxisTitle = "Sales Count"; /*Y-Axis label */
-        String title = "Month With Interview Count - Bar Chart"; /* Chart title */
+        }catch (SQLException | DocumentException | FileNotFoundException e){
+
+        }finally {
+            document.close();
+        }
+    }
+    public static void putData2PDF() throws IOException{
+
+
+        String[] xAxisLabels = {"October", "November"};
+        String xAxisTitle = "Month"; /* X - Axis label */
+        String yAxisTitle = "Interview Count"; /*Y-Axis label */
+        String title = "Month With Interview Counts - Bar Chart"; /* Chart title */
         DataSeries dataSeries = new DataSeries(xAxisLabels, xAxisTitle, yAxisTitle, title);
 
-
-        /* Step - 2: Define the data for the clustered bar chart */
-        double[][] data = new double[][]{{30, 33, 56, 2}, {45, 12, 98, 15}};
-        String[] legendLabels = {"Amar", "Asis"}; /* Define legend for bar chart */
-        Paint[] paints = TestDataGenerator.getRandomPaints(2);
-        ClusteredBarChartProperties clusteredBarChartProperties = new ClusteredBarChartProperties();
+        double[][] data = new double[][]{{10, 30}};
+        String[] legendLabels = {" "};
+        Paint[] paints = TestDataGenerator.getRandomPaints(1);
+        BarChartProperties barChartProperties = new BarChartProperties();
         AxisChartDataSet axisChartDataSet = null;
         try {
-            axisChartDataSet = new AxisChartDataSet(data, legendLabels, paints, ChartType.BAR_CLUSTERED, clusteredBarChartProperties);
+            axisChartDataSet = new AxisChartDataSet(data, legendLabels, paints, ChartType.BAR, barChartProperties);
         } catch (ChartDataException e) {
             throw new RuntimeException(e);
         }
@@ -62,160 +118,90 @@ public class ITextPDFExample {
         AxisChart my_output_chart = new AxisChart(dataSeries, chartProperties, axis_Properties, legend_Properties, 500, 320); /* Create Chart object */
 
 
-
-
         Document document = new Document();
         try {
-            PdfWriter.getInstance(document, new FileOutputStream("C:\\Users\\amar.sarkar\\Downloads\\Problem2-Read-Data-from-cv2\\src\\main\\resources\\Data.pdf"));
+            PdfWriter.getInstance(document, new FileOutputStream("./src/main/resources/Data.pdf"));
             document.open();
 
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            try {
-                JPEGEncoder.encode(my_output_chart, 1, outputStream);
-            } catch (ChartDataException e) {
-                throw new RuntimeException(e);
-            } catch (PropertyException e) {
-                throw new RuntimeException(e);
-            }
-
-            Image newimage = new Jpeg(outputStream.toByteArray());
 
             addMetaData(document);
+            addTitlePage(document, "Interview Report");
 
-            addTitlePage(document);
-
+            Image newimage = chartToImage(my_output_chart);
             document.add(newimage);
-
+            document.add(new Paragraph("\n"));
+            createTable(document, new String[]{"col1", "col2"}, new String[][]{{"1", "2"}, {"3", "4"}});
 //            addContent(document);
             document.close();
         } catch (DocumentException e) {
             throw new RuntimeException(e);
         }
     }
+    public static Image chartToImage(AxisChart chart){
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            JPEGEncoder.encode(chart, 1, outputStream);
+            return new Jpeg(outputStream.toByteArray());
+        } catch (ChartDataException | PropertyException | IOException | BadElementException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private static void addMetaData(Document document) {
-//        document.addTitle("My first PDF");
-//        document.addSubject("Using iText");
+        document.addTitle("iText PDF");
+        document.addSubject("Using iText");
         document.addKeywords("Java, PDF, iText, jCharts");
         document.addAuthor(System.getProperty("user.name"));
         document.addCreator(System.getProperty("user.name"));
     }
 
-    private static void addTitlePage(Document document)
+    private static void addTitlePage(Document document, String str)
             throws DocumentException {
         Paragraph preface = new Paragraph();
         // We add one empty line
         addEmptyLine(preface, 1);
         // Lets write a big header
-        preface.add(new Paragraph("Interview Report", catFont));
+        preface.add(new Paragraph(str, catFont));
 
         addEmptyLine(preface, 1);
-        // Will create: Report generated by: _name, _date
-//        preface.add(new Paragraph(
-//                "Report generated by: " + System.getProperty("user.name") + ", ", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-//                smallBold));
-//        addEmptyLine(preface, 3);
-//        preface.add(new Paragraph(
-//                "This document describes something which is very important ",
-//                smallBold));
-
-//        addEmptyLine(preface, 8);
-
-//        preface.add(new Paragraph(
-//                "This document is a preliminary version and not subject to your license agreement or any other agreement with vogella.com ;-).",
-//                redFont));
-
         document.add(preface);
+    }
+    private static void addHeading(Document document, String str)
+            throws DocumentException {
+        Paragraph preface = new Paragraph();
+        // We add one empty line
+        addEmptyLine(preface, 1);
+        // Lets write a big header
+        preface.add(new Paragraph(str, subFont));
 
-        // Start a new page
-//        document.newPage();
+        addEmptyLine(preface, 1);
+        document.add(preface);
     }
 
-    private static void addContent(Document document) throws DocumentException {
-        Anchor anchor = new Anchor("First Chapter", catFont);
-        anchor.setName("First Chapter");
-
-        // Second parameter is the number of the chapter
-        Chapter catPart = new Chapter(new Paragraph(anchor), 1);
-
-        Paragraph subPara = new Paragraph("Subcategory 1", subFont);
-        Section subCatPart = catPart.addSection(subPara);
-        subCatPart.add(new Paragraph("Hello"));
-
-        subPara = new Paragraph("Subcategory 2", subFont);
-        subCatPart = catPart.addSection(subPara);
-        subCatPart.add(new Paragraph("Paragraph 1"));
-        subCatPart.add(new Paragraph("Paragraph 2"));
-        subCatPart.add(new Paragraph("Paragraph 3"));
-
-        // add a list
-        createList(subCatPart);
+    private static void createTable(Document document, String[] headings, String[][] rows)
+            throws DocumentException {
         Paragraph paragraph = new Paragraph();
-        addEmptyLine(paragraph, 5);
-        subCatPart.add(paragraph);
+        int cols = rows[0].length;
+        PdfPTable table = new PdfPTable(cols);
+        table.setPaddingTop(2);
 
-        // add a table
-//        createTable(subCatPart);
-
-        // now add all this to the document
-//        document.add(catPart);
-
-        // Next section
-        anchor = new Anchor("Second Chapter", catFont);
-        anchor.setName("Second Chapter");
-
-        // Second parameter is the number of the chapter
-        catPart = new Chapter(new Paragraph(anchor), 1);
-
-        subPara = new Paragraph("Subcategory", subFont);
-        subCatPart = catPart.addSection(subPara);
-        subCatPart.add(new Paragraph("This is a very important message"));
-
-        // now add all this to the document
-        document.add(catPart);
-
-    }
-
-    private static void createTable(Section subCatPart)
-            throws BadElementException {
-        PdfPTable table = new PdfPTable(3);
-
-//         t.setBorderColor(BaseColor.GRAY);
-//         t.setPadding(4);
-//         t.setSpacing(4);
-//         t.setBorderWidth(1);
-
-        PdfPCell c1 = new PdfPCell(new Phrase("Table Header 1"));
-        c1.setHorizontalAlignment(Element.ALIGN_CENTER);
-        table.addCell(c1);
-
-        c1 = new PdfPCell(new Phrase("Table Header 2"));
-        c1.setHorizontalAlignment(Element.ALIGN_CENTER);
-        table.addCell(c1);
-
-        c1 = new PdfPCell(new Phrase("Table Header 3"));
-        c1.setHorizontalAlignment(Element.ALIGN_CENTER);
-        table.addCell(c1);
+        for(int i = 0; i < headings.length; i++){
+            PdfPCell c1 = new PdfPCell(new Phrase(headings[i]));
+            c1.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(c1);
+        }
         table.setHeaderRows(1);
-
-        table.addCell("1.0");
-        table.addCell("1.1");
-        table.addCell("1.2");
-        table.addCell("2.1");
-        table.addCell("2.2");
-        table.addCell("2.3");
-
-        subCatPart.add(table);
-
+        for(int i = 0; i < rows.length; i++){
+            for(int j = 0; j < cols; j++){
+                PdfPCell cell = new PdfPCell(new Phrase(rows[i][j]));
+                cell.setHorizontalAlignment(1);
+                table.addCell(cell);
+            }
+        }
+        paragraph.add(table);
+        document.add(paragraph);
     }
 
-    private static void createList(Section subCatPart) {
-//        List list = new List(true, false, 10);
-//        list.add(new ListItem("First point"));
-//        list.add(new ListItem("Second point"));
-//        list.add(new ListItem("Third point"));
-//        subCatPart.add(list);
-    }
 
     private static void addEmptyLine(Paragraph paragraph, int number) {
         for (int i = 0; i < number; i++) {
