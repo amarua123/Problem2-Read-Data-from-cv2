@@ -62,7 +62,7 @@ public class ITextPDFExample {
             while (rs.next()) {
                 String team = rs.getString("team");
                 String total_interviews = rs.getString("total_interviews");
-//                System.out.println(team+" "+total_interviews);
+//                System.out.println(team+*-*-" "+total_interviews);
                 createTable(document, new String[]{"Team", "Total Interviews"}, new String[][]{new String[]{team, total_interviews}});
             }
 
@@ -82,24 +82,87 @@ public class ITextPDFExample {
 //                System.out.println(team+" "+total_interviews);
                 createTable(document, new String[]{"Team", "Total Interviews"}, new String[][]{new String[]{team, total_interviews}});
             }
+//            document.add(new Paragraph("\n"));
+        //Question 3
+            addHeading(document, "Top 3 Panels for the month of October and November 2023");
 
+            sql = "select panelname, count(*) as no_of_interviews from interviews\n" +
+                    "where interviewdate between '2023-10-01' and '2023-11-30'\n" +
+                    "group by panelname order by no_of_interviews desc limit 3;";
+            p = con.prepareStatement(sql);
+            rs = p.executeQuery();
+
+            AxisChart my_output_chart = getChart("Panel Names", rs, "panelname");
+
+            Image newimage = chartToImage(my_output_chart);
+            document.add(newimage);
+            document.newPage();
+
+            //Question 4
+            addHeading(document, "Top 3 Skills for the month of October and November 2023");
+
+            sql = "select skill, count(*) as no_of_interviews from interviews\n" +
+                    "where interviewdate between '2023-10-01' and '2023-11-30'\n" +
+                    "group by skill order by no_of_interviews desc limit 3;";
+            p = con.prepareStatement(sql);
+            rs = p.executeQuery();
+
+            my_output_chart = getChart("Panel Names", rs, "skill");
+
+            newimage = chartToImage(my_output_chart);
+            document.add(newimage);
+//            document.add(new Paragraph("\n"));
+
+            //Question 5
+            addHeading(document, "Top 3 Skills for which the interviews were conducted in the\n" +
+                    "Peak Time");
+
+            sql = "select skill, count(skill) as no_of_interviews from interviews where month(interviewdate) =\n" +
+                    "(\n" +
+                    "with month_with_interview_count as\n" +
+                    "(select month(interviewdate) as peak, count(*) as interviewcount from interviews group by month(interviewdate))\n" +
+                    "select peak from month_with_interview_count where interviewcount = (select max(interviewcount) from month_with_interview_count)\n" +
+                    ")\n" +
+                    "group by skill order by no_of_interviews desc limit 3;";
+            p = con.prepareStatement(sql);
+            rs = p.executeQuery();
+
+            my_output_chart = getChart("Skill", rs, "skill");
+
+            newimage = chartToImage(my_output_chart);
+            document.add(newimage);
+            document.add(new Paragraph("\n"));
 
         }catch (SQLException | DocumentException | FileNotFoundException e){
-
+            e.printStackTrace();
         }finally {
             document.close();
         }
+
     }
-    public static void putData2PDF() throws IOException{
-
-
-        String[] xAxisLabels = {"October", "November"};
-        String xAxisTitle = "Month"; /* X - Axis label */
+    public static AxisChart getChart(String xAxisTitle, ResultSet rs, String heading){
+        String[] xAxisLabels = {"Team 1", "Team 2", "Team 3"};
+//        String xAxisTitle = "Panel Names";
         String yAxisTitle = "Interview Count"; /*Y-Axis label */
-        String title = "Month With Interview Counts - Bar Chart"; /* Chart title */
+        String title = " "; /* Chart title */
         DataSeries dataSeries = new DataSeries(xAxisLabels, xAxisTitle, yAxisTitle, title);
 
-        double[][] data = new double[][]{{10, 30}};
+        double[][] data = new double[][]{{0, 0, 0}};
+        int i = 0;
+        while(true){
+            try {
+                if (!rs.next()) break;
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            try {
+                xAxisLabels[i] = rs.getString(heading);
+                data[0][i] = rs.getInt("no_of_interviews");
+                i += 1;
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
         String[] legendLabels = {" "};
         Paint[] paints = TestDataGenerator.getRandomPaints(1);
         BarChartProperties barChartProperties = new BarChartProperties();
@@ -115,27 +178,7 @@ public class ITextPDFExample {
         ChartProperties chartProperties = new ChartProperties(); /* Special chart properties, if any */
         AxisProperties axis_Properties = new AxisProperties();
         LegendProperties legend_Properties = new LegendProperties(); /* Dummy Axis and legend properties class */
-        AxisChart my_output_chart = new AxisChart(dataSeries, chartProperties, axis_Properties, legend_Properties, 500, 320); /* Create Chart object */
-
-
-        Document document = new Document();
-        try {
-            PdfWriter.getInstance(document, new FileOutputStream("./src/main/resources/Data.pdf"));
-            document.open();
-
-
-            addMetaData(document);
-            addTitlePage(document, "Interview Report");
-
-            Image newimage = chartToImage(my_output_chart);
-            document.add(newimage);
-            document.add(new Paragraph("\n"));
-            createTable(document, new String[]{"col1", "col2"}, new String[][]{{"1", "2"}, {"3", "4"}});
-//            addContent(document);
-            document.close();
-        } catch (DocumentException e) {
-            throw new RuntimeException(e);
-        }
+        return new AxisChart(dataSeries, chartProperties, axis_Properties, legend_Properties, 450, 280); /* Create Chart object */
     }
     public static Image chartToImage(AxisChart chart){
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
